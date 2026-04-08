@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import SegmentsPage from "./pages/SegmentsPage";
 import DemographicsPage from "./pages/DemographicsPage";
 import AccountsPage from "./pages/AccountsPage";
+import CustomerListPage from "./pages/CustomerListPage";
 import Customer360Page from "./pages/Customer360Page";
 import AlertsPage from "./pages/AlertsPage";
 import VIPPage from "./pages/VIPPage";
@@ -26,7 +27,8 @@ const App = () => (
             <Route path="/" element={<SegmentsPage />} />
             <Route path="/demographics" element={<DemographicsPage />} />
             <Route path="/accounts" element={<AccountsPage />} />
-            <Route path="/customer-360" element={<Customer360Page />} />
+            <Route path="/customer-360" element={<CustomerListPage />} />
+            <Route path="/customer-360/:customerId" element={<Customer360Page />} />
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/vip" element={<VIPPage />} />
             <Route path="/behavior-risk" element={<BehaviorRiskPage />} />
