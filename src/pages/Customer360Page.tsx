@@ -1,30 +1,35 @@
 import { useState } from "react";
-import { Search, User, CreditCard, TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, User, CreditCard, TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
-import { sampleCustomer } from "@/lib/mockData";
+import { sampleCustomer, accountFinancials, accountMonthlyRevenue } from "@/lib/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 
 const Customer360Page = () => {
+  const navigate = useNavigate();
   const c = sampleCustomer;
   const [selectedAccount, setSelectedAccount] = useState(c.accounts[0].id);
   const activeAcc = c.accounts.find((a) => a.id === selectedAccount) || c.accounts[0];
 
+  // Per-account data
+  const fin = accountFinancials[selectedAccount] || c.financials;
+  const monthlyRev = accountMonthlyRevenue[selectedAccount] || c.monthlyRevenue;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">Customer 360° View</h2>
-        <p className="text-sm text-muted-foreground">Individual customer profile and account details</p>
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search customer ID, name, or account..." className="pl-9 text-sm" defaultValue={c.id} />
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/customer-360")}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Customer 360° View</h2>
+          <p className="text-sm text-muted-foreground">Individual customer profile and account details</p>
+        </div>
       </div>
 
       {/* 1. Customer Profile */}
@@ -40,18 +45,12 @@ const Customer360Page = () => {
             </div>
             <p className="text-xs text-muted-foreground">{c.id}</p>
             <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4 lg:grid-cols-6">
-              {[
-                ["Segment", c.segment],
-                ["Branch", c.primaryBranch],
-                ["Type", c.customerType],
-                ["Accounts", c.accountCount],
-                ["Age", c.age],
-                ["Tenure", c.tenure],
-                ["KYC", c.kyc],
-                ["Gender", c.gender],
-                ["Nationality", c.nationality],
-              ].map(([label, val]) => (
-                <div key={label as string}>
+              {([
+                ["Segment", c.segment], ["Branch", c.primaryBranch], ["Type", c.customerType],
+                ["Accounts", c.accountCount], ["Age", c.age], ["Tenure", c.tenure],
+                ["KYC", c.kyc], ["Gender", c.gender], ["Nationality", c.nationality],
+              ] as [string, string | number][]).map(([label, val]) => (
+                <div key={label}>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
                   <p className="text-xs font-medium text-card-foreground">{val}</p>
                 </div>
@@ -62,7 +61,7 @@ const Customer360Page = () => {
       </div>
 
       {/* 2. Linked Accounts */}
-      <ChartCard title="Linked Accounts" subtitle="Click an account to view details">
+      <ChartCard title="Linked Accounts" subtitle="Select an account to view its detailed metrics below">
         <Table>
           <TableHeader>
             <TableRow>
@@ -77,7 +76,7 @@ const Customer360Page = () => {
               <TableRow
                 key={acc.id}
                 onClick={() => setSelectedAccount(acc.id)}
-                className={`cursor-pointer transition-colors ${acc.id === selectedAccount ? "bg-primary/5" : "hover:bg-muted/50"}`}
+                className={`cursor-pointer transition-colors ${acc.id === selectedAccount ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
               >
                 <TableCell className="text-sm font-mono">{acc.number}</TableCell>
                 <TableCell className="text-sm">{acc.class}</TableCell>
@@ -93,16 +92,21 @@ const Customer360Page = () => {
         </Table>
       </ChartCard>
 
+      {/* Selected account indicator */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        Showing data for account <span className="font-mono font-medium text-foreground">{activeAcc.number}</span> ({activeAcc.class})
+      </div>
+
       {/* 3. Financial Overview */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard title="Total Revenue" value={`₹${c.financials.totalRevenue.toLocaleString()}`} subtitle="Commission" />
-        <KPICard title="TRN Volume" value={c.financials.trnVolume} subtitle="Total transactions" />
-        <KPICard title="Avg Daily TRN" value={`₹${c.financials.avgDailyTrn.toLocaleString()}`} />
-        <KPICard title="Min Sub Revenue" value={`₹${c.financials.minSubscriptionRevenue}`} subtitle="Monthly" />
+        <KPICard title="Total Revenue" value={`₹${fin.totalRevenue.toLocaleString()}`} subtitle="Commission" />
+        <KPICard title="TRN Volume" value={fin.trnVolume} subtitle="Total transactions" />
+        <KPICard title="Avg Daily TRN" value={`₹${fin.avgDailyTrn.toLocaleString()}`} />
+        <KPICard title="Min Sub Revenue" value={`₹${fin.minSubscriptionRevenue}`} subtitle="Monthly" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Salary */}
         <ChartCard title="Salary Information">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -126,31 +130,25 @@ const Customer360Page = () => {
           </div>
         </ChartCard>
 
-        {/* Best/Worst Month */}
         <ChartCard title="Best & Worst Months">
           <div className="space-y-4">
             <div className="rounded-md border border-success/20 bg-success/5 p-3">
-              <div className="flex items-center gap-1.5 text-success text-xs font-medium mb-1">
-                <TrendingUp className="h-3 w-3" /> Best Month
-              </div>
-              <p className="text-sm font-semibold text-card-foreground">{c.financials.bestMonth.month}</p>
-              <p className="text-xs text-muted-foreground">Revenue: ₹{c.financials.bestMonth.revenue.toLocaleString()} · {c.financials.bestMonth.volume} TRN</p>
+              <div className="flex items-center gap-1.5 text-success text-xs font-medium mb-1"><TrendingUp className="h-3 w-3" /> Best Month</div>
+              <p className="text-sm font-semibold text-card-foreground">{fin.bestMonth.month}</p>
+              <p className="text-xs text-muted-foreground">Revenue: ₹{fin.bestMonth.revenue.toLocaleString()} · {fin.bestMonth.volume} TRN</p>
             </div>
             <div className="rounded-md border border-destructive/20 bg-destructive/5 p-3">
-              <div className="flex items-center gap-1.5 text-destructive text-xs font-medium mb-1">
-                <TrendingDown className="h-3 w-3" /> Worst Month
-              </div>
-              <p className="text-sm font-semibold text-card-foreground">{c.financials.worstMonth.month}</p>
-              <p className="text-xs text-muted-foreground">Revenue: ₹{c.financials.worstMonth.revenue.toLocaleString()} · {c.financials.worstMonth.volume} TRN</p>
+              <div className="flex items-center gap-1.5 text-destructive text-xs font-medium mb-1"><TrendingDown className="h-3 w-3" /> Worst Month</div>
+              <p className="text-sm font-semibold text-card-foreground">{fin.worstMonth.month}</p>
+              <p className="text-xs text-muted-foreground">Revenue: ₹{fin.worstMonth.revenue.toLocaleString()} · {fin.worstMonth.volume} TRN</p>
             </div>
           </div>
         </ChartCard>
 
-        {/* Revenue Trend */}
         <ChartCard title="Monthly Revenue Trend">
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={c.monthlyRevenue}>
+              <AreaChart data={monthlyRev}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "hsl(220,10%,46%)" }} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(220,10%,46%)" }} />
