@@ -9,7 +9,7 @@ import ChartCard from "@/components/dashboard/ChartCard";
 import AppBarChart from "@/components/charts/AppBarChart";
 import { sampleCustomer, accountFinancials, accountMonthlyRevenue, accountIncomeDebit, topTrnCodes } from "@/lib/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatCurrencyLYD, formatNumber } from "@/lib/formatters";
 import { translateDataValue, translateMonthLabel } from "@/lib/i18n";
