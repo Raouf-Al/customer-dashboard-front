@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatPercentChange } from "@/lib/formatters";
 
 interface KPICardProps {
   title: string;
@@ -11,7 +12,7 @@ interface KPICardProps {
 }
 
 const KPICard = ({ title, value, change, icon, subtitle }: KPICardProps) => {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   return (
     <div className="rounded-lg border border-border bg-card p-5 animate-fade-in">
@@ -38,7 +39,7 @@ const KPICard = ({ title, value, change, icon, subtitle }: KPICardProps) => {
           )}
           <span>
             {change >= 0 ? "+" : ""}
-            {change}%
+            {formatPercentChange(change, { locale })}%
           </span>
           <span className="font-normal text-muted-foreground">
             {t("app.periodComparison")}

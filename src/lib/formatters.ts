@@ -71,3 +71,26 @@ export function formatNumber(
 export function formatCurrencyLYD(value: number, options: CurrencyFormatOptions = {}) {
   return getNumberFormatter(options).format(value);
 }
+
+/**
+ * Rounds a percentage value to avoid floating-point display noise (e.g. 3.569999999999994 → 3.6).
+ */
+export function roundPercent(value: number, fractionDigits = 1): number {
+  return Number.parseFloat(value.toFixed(fractionDigits));
+}
+
+/**
+ * Formats a percentage change for UI (locale-aware; one decimal by default).
+ */
+export function formatPercentChange(
+  value: number,
+  options: { locale?: string; maximumFractionDigits?: number } = {},
+): string {
+  const maximumFractionDigits = options.maximumFractionDigits ?? 1;
+  const rounded = roundPercent(value, maximumFractionDigits);
+  return formatNumber(rounded, {
+    locale: options.locale,
+    minimumFractionDigits: 0,
+    maximumFractionDigits,
+  });
+}
