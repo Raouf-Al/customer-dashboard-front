@@ -103,10 +103,10 @@ export const sampleCustomer = {
   gender: "Male",
   nationality: "Domestic",
   accounts: [
-    { id: "ACC-001", number: "****4521", class: "Savings", status: "Open", balance: 245000 },
-    { id: "ACC-002", number: "****8832", class: "Current", status: "Open", balance: 890000 },
-    { id: "ACC-003", number: "****1109", class: "Fixed Deposit", status: "Open", balance: 500000 },
-    { id: "ACC-004", number: "****6677", class: "Savings", status: "Closed", balance: 0 },
+    { id: "ACC-001", number: "****4521", class: "Savings", status: "Open", balance: 245000, creditScore: 742, riskScore: 28, recencyDays: 3, accountAge: "5y 2m" },
+    { id: "ACC-002", number: "****8832", class: "Current", status: "Open", balance: 890000, creditScore: 756, riskScore: 22, recencyDays: 1, accountAge: "7y 0m" },
+    { id: "ACC-003", number: "****1109", class: "Fixed Deposit", status: "Open", balance: 500000, creditScore: 738, riskScore: 15, recencyDays: 45, accountAge: "3y 8m" },
+    { id: "ACC-004", number: "****6677", class: "Savings", status: "Closed", balance: 0, creditScore: 690, riskScore: 72, recencyDays: 180, accountAge: "1y 4m" },
   ],
   salary: {
     receivesSalary: true,
@@ -119,6 +119,8 @@ export const sampleCustomer = {
     avgDailyTrn: 12400,
     avgMonthlyTrn: 372000,
     minSubscriptionRevenue: 450,
+    adb: 245000,
+    recencyDays: 3,
     bestMonth: { month: "Mar 2024", revenue: 6800, volume: 52 },
     worstMonth: { month: "Aug 2024", revenue: 1200, volume: 12 },
   },
@@ -195,7 +197,6 @@ export const alerts = [
   { id: 8, type: "subscription", severity: "low", title: "WhatsApp Opt-in Growth", description: "WhatsApp Banking opt-ins grew 22% month-over-month.", time: "3d ago", metric: "+22%" },
 ];
 
-// Multiple customers for the customer list page
 export const customersListData = [
   { id: "CUST-2024-00142", name: "Aarav Mehta", segment: "Retail Premium", branch: "Mumbai Central", accounts: 4, totalBalance: 1635000, totalRevenue: 42800, trnVolume: 342, creditScore: 742, status: "Active" },
   { id: "CUST-2024-00078", name: "Priya Sharma", segment: "Private Banking", branch: "Delhi South", accounts: 6, totalBalance: 4520000, totalRevenue: 89200, trnVolume: 512, creditScore: 798, status: "Active" },
@@ -211,12 +212,12 @@ export const customersListData = [
   { id: "CUST-2024-00955", name: "Neha Agarwal", segment: "Digital Only", branch: "Online", accounts: 1, totalBalance: 78000, totalRevenue: 4500, trnVolume: 1120, creditScore: 672, status: "Active" },
 ];
 
-// Per-account financial data keyed by account id
-export const accountFinancials: Record<string, typeof sampleCustomer.financials> = {
+// Per-account financial data
+export const accountFinancials: Record<string, { totalRevenue: number; trnVolume: number; avgDailyTrn: number; avgMonthlyTrn: number; minSubscriptionRevenue: number; adb: number; recencyDays: number; bestMonth: { month: string; revenue: number; volume: number }; worstMonth: { month: string; revenue: number; volume: number } }> = {
   "ACC-001": sampleCustomer.financials,
-  "ACC-002": { totalRevenue: 68200, trnVolume: 521, avgDailyTrn: 18200, avgMonthlyTrn: 546000, minSubscriptionRevenue: 600, bestMonth: { month: "Feb 2024", revenue: 9400, volume: 68 }, worstMonth: { month: "Jul 2024", revenue: 2800, volume: 18 } },
-  "ACC-003": { totalRevenue: 15000, trnVolume: 24, avgDailyTrn: 4200, avgMonthlyTrn: 126000, minSubscriptionRevenue: 0, bestMonth: { month: "Jan 2024", revenue: 2500, volume: 4 }, worstMonth: { month: "Dec 2024", revenue: 800, volume: 1 } },
-  "ACC-004": { totalRevenue: 0, trnVolume: 0, avgDailyTrn: 0, avgMonthlyTrn: 0, minSubscriptionRevenue: 0, bestMonth: { month: "—", revenue: 0, volume: 0 }, worstMonth: { month: "—", revenue: 0, volume: 0 } },
+  "ACC-002": { totalRevenue: 68200, trnVolume: 521, avgDailyTrn: 18200, avgMonthlyTrn: 546000, minSubscriptionRevenue: 600, adb: 890000, recencyDays: 1, bestMonth: { month: "Feb 2024", revenue: 9400, volume: 68 }, worstMonth: { month: "Jul 2024", revenue: 2800, volume: 18 } },
+  "ACC-003": { totalRevenue: 15000, trnVolume: 24, avgDailyTrn: 4200, avgMonthlyTrn: 126000, minSubscriptionRevenue: 0, adb: 500000, recencyDays: 45, bestMonth: { month: "Jan 2024", revenue: 2500, volume: 4 }, worstMonth: { month: "Dec 2024", revenue: 800, volume: 1 } },
+  "ACC-004": { totalRevenue: 0, trnVolume: 0, avgDailyTrn: 0, avgMonthlyTrn: 0, minSubscriptionRevenue: 0, adb: 0, recencyDays: 180, bestMonth: { month: "—", revenue: 0, volume: 0 }, worstMonth: { month: "—", revenue: 0, volume: 0 } },
 };
 
 export const accountMonthlyRevenue: Record<string, typeof sampleCustomer.monthlyRevenue> = {
@@ -233,8 +234,39 @@ export const accountMonthlyRevenue: Record<string, typeof sampleCustomer.monthly
     { month: "Jul", revenue: 900, volume: 1 }, { month: "Aug", revenue: 1000, volume: 1 }, { month: "Sep", revenue: 1200, volume: 2 },
     { month: "Oct", revenue: 800, volume: 1 }, { month: "Nov", revenue: 900, volume: 2 }, { month: "Dec", revenue: 800, volume: 1 },
   ],
-  "ACC-004": Array(12).fill({ month: "", revenue: 0, volume: 0 }).map((_, i) => ({ month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i], revenue: 0, volume: 0 })),
+  "ACC-004": Array(12).fill(null).map((_, i) => ({ month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i], revenue: 0, volume: 0 })),
 };
+
+// Income & Debit trend per account
+export const accountIncomeDebit: Record<string, { month: string; income: number; debit: number }[]> = {
+  "ACC-001": [
+    { month: "Jan", income: 185000, debit: 142000 }, { month: "Feb", income: 185000, debit: 156000 },
+    { month: "Mar", income: 192000, debit: 138000 }, { month: "Apr", income: 185000, debit: 165000 },
+    { month: "May", income: 185000, debit: 148000 }, { month: "Jun", income: 185000, debit: 172000 },
+    { month: "Jul", income: 190000, debit: 158000 }, { month: "Aug", income: 185000, debit: 180000 },
+    { month: "Sep", income: 185000, debit: 145000 }, { month: "Oct", income: 195000, debit: 152000 },
+    { month: "Nov", income: 185000, debit: 160000 }, { month: "Dec", income: 210000, debit: 198000 },
+  ],
+  "ACC-002": [
+    { month: "Jan", income: 420000, debit: 380000 }, { month: "Feb", income: 450000, debit: 395000 },
+    { month: "Mar", income: 430000, debit: 410000 }, { month: "Apr", income: 445000, debit: 388000 },
+    { month: "May", income: 460000, debit: 420000 }, { month: "Jun", income: 435000, debit: 405000 },
+    { month: "Jul", income: 410000, debit: 395000 }, { month: "Aug", income: 440000, debit: 415000 },
+    { month: "Sep", income: 455000, debit: 400000 }, { month: "Oct", income: 470000, debit: 430000 },
+    { month: "Nov", income: 445000, debit: 410000 }, { month: "Dec", income: 490000, debit: 460000 },
+  ],
+  "ACC-003": Array(12).fill(null).map((_, i) => ({ month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i], income: 0, debit: 0 })),
+  "ACC-004": Array(12).fill(null).map((_, i) => ({ month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i], income: 0, debit: 0 })),
+};
+
+// Top TRN codes
+export const topTrnCodes = [
+  { code: "TRN-WIRE", frequency: 89, revenue: 12400 },
+  { code: "TRN-BILL", frequency: 67, revenue: 3400 },
+  { code: "TRN-FX", frequency: 23, revenue: 8900 },
+  { code: "TRN-DD", frequency: 12, revenue: 2100 },
+  { code: "TRN-TF", frequency: 8, revenue: 15200 },
+];
 
 export const vipCustomers = [
   { rank: 1, name: "Priya Sharma", aum: 45200000, revenue: 892000, loanSize: 12000000, cardSpend: 2800000, churnRisk: "Low" },

@@ -1,25 +1,49 @@
 import { useState } from "react";
-import { CalendarDays, ChevronDown, Building2 } from "lucide-react";
+import { CalendarDays, ChevronDown, Building2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const GlobalHeader = () => {
   const [dateFrom, setDateFrom] = useState<Date>(new Date(2024, 0, 1));
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [currency, setCurrency] = useState<"local" | "usd">("local");
+  const { lang, setLang, t } = useLanguage();
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-6">
       <div className="flex items-center gap-2">
         <Building2 className="h-4 w-4 text-primary" />
-        <h1 className="text-sm font-semibold text-foreground">Customer Analytics</h1>
+        <h1 className="text-sm font-semibold text-foreground">{t("app.title")}</h1>
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Language Toggle */}
+        <div className="flex h-8 items-center rounded-md border border-border bg-muted p-0.5">
+          <button
+            onClick={() => setLang("en")}
+            className={cn(
+              "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+              lang === "en" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            EN
+          </button>
+          <button
+            onClick={() => setLang("ar")}
+            className={cn(
+              "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+              lang === "ar" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            AR
+          </button>
+        </div>
+
         {/* Date Range */}
         <Popover>
           <PopoverTrigger asChild>
@@ -43,12 +67,12 @@ const GlobalHeader = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Regions</SelectItem>
-            <SelectItem value="north">North</SelectItem>
-            <SelectItem value="south">South</SelectItem>
-            <SelectItem value="east">East</SelectItem>
-            <SelectItem value="west">West</SelectItem>
-            <SelectItem value="central">Central</SelectItem>
+            <SelectItem value="all">{t("filter.allRegions")}</SelectItem>
+            <SelectItem value="north">{t("filter.north")}</SelectItem>
+            <SelectItem value="south">{t("filter.south")}</SelectItem>
+            <SelectItem value="east">{t("filter.east")}</SelectItem>
+            <SelectItem value="west">{t("filter.west")}</SelectItem>
+            <SelectItem value="central">{t("filter.central")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -58,9 +82,9 @@ const GlobalHeader = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="retail">Retail</SelectItem>
-            <SelectItem value="corporate">Corporate</SelectItem>
+            <SelectItem value="all">{t("filter.allTypes")}</SelectItem>
+            <SelectItem value="retail">{t("filter.retail")}</SelectItem>
+            <SelectItem value="corporate">{t("filter.corporate")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -73,7 +97,7 @@ const GlobalHeader = () => {
               currency === "local" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             )}
           >
-            LCY
+            {t("currency.lcy")}
           </button>
           <button
             onClick={() => setCurrency("usd")}
@@ -82,7 +106,7 @@ const GlobalHeader = () => {
               currency === "usd" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
             )}
           >
-            USD
+            {t("currency.usd")}
           </button>
         </div>
       </div>
