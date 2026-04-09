@@ -1,8 +1,9 @@
 import { Wallet, XCircle, Snowflake, Activity } from "lucide-react";
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
+import AppBarChart from "@/components/charts/AppBarChart";
 import { accountStatusData, accountClassDistribution, salaryAccountData, adbRanges, subscriptionData, regionalData } from "@/lib/mockData";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -62,15 +63,17 @@ const AccountsPage = () => {
 
         <ChartCard title={t("accounts.regionalDistribution")}>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={translatedRegionalData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                <XAxis dataKey="region" tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="customers" fill="hsl(217,71%,53%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <AppBarChart
+              data={translatedRegionalData}
+              categoryKey="region"
+              bars={[
+                {
+                  dataKey: "customers",
+                  label: t("segments.tooltip.customers"),
+                  color: "hsl(var(--chart-1))",
+                },
+              ]}
+            />
           </div>
         </ChartCard>
       </div>
@@ -93,15 +96,17 @@ const AccountsPage = () => {
 
         <ChartCard title={t("accounts.adbRanges")} className="lg:col-span-2">
           <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={adbRanges}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                <XAxis dataKey="range" tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="count" fill="hsl(38,92%,50%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <AppBarChart
+              data={adbRanges}
+              categoryKey="range"
+              bars={[
+                {
+                  dataKey: "count",
+                  label: t("accounts.adbRanges"),
+                  color: "hsl(var(--chart-3))",
+                },
+              ]}
+            />
           </div>
         </ChartCard>
       </div>

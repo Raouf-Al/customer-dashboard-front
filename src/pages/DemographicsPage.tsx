@@ -1,7 +1,8 @@
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
+import AppBarChart from "@/components/charts/AppBarChart";
 import { ageDistribution, genderData, nationalityData, tenureData, kycData, segmentData } from "@/lib/mockData";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip } from "recharts";
 import { Users, Building, CheckCircle, UserCheck } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatNumber } from "@/lib/formatters";
@@ -50,29 +51,33 @@ const DemographicsPage = () => {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title={t("demographics.ageDistribution.title")} subtitle={t("demographics.ageDistribution.subtitle")}>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ageDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                <XAxis dataKey="range" tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="count" fill="hsl(217,71%,53%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <AppBarChart
+              data={ageDistribution}
+              categoryKey="range"
+              bars={[
+                {
+                  dataKey: "count",
+                  label: t("segments.tooltip.customers"),
+                  color: "hsl(var(--chart-1))",
+                },
+              ]}
+            />
           </div>
         </ChartCard>
 
         <ChartCard title={t("demographics.customerTenure.title")} subtitle={t("demographics.customerTenure.subtitle")}>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={tenureData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,13%,91%)" />
-                <XAxis dataKey="years" tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <YAxis tick={{ fontSize: 11, fill: "hsl(220,10%,46%)" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="count" fill="hsl(142,71%,45%)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <AppBarChart
+              data={tenureData}
+              categoryKey="years"
+              bars={[
+                {
+                  dataKey: "count",
+                  label: t("segments.tooltip.customers"),
+                  color: "hsl(var(--chart-2))",
+                },
+              ]}
+            />
           </div>
         </ChartCard>
       </div>

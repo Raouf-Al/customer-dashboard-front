@@ -6,9 +6,10 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
+import AppBarChart from "@/components/charts/AppBarChart";
 import { sampleCustomer, accountFinancials, accountMonthlyRevenue, accountIncomeDebit, topTrnCodes } from "@/lib/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatCurrencyLYD, formatNumber } from "@/lib/formatters";
 import { translateDataValue, translateMonthLabel } from "@/lib/i18n";
@@ -353,17 +354,42 @@ const Customer360Page = () => {
       {/* Channel Utilization */}
       <ChartCard title={t("c360.channelUtil")} subtitle={t("c360.volValueChannel")}>
         <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={localizedChannelData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-              <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} />
-              <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-              <Bar yAxisId="left" dataKey="volume" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name={t("label.volume")} />
-              <Bar yAxisId="right" dataKey="value" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name={t("label.value")} />
-            </BarChart>
-          </ResponsiveContainer>
+          <AppBarChart
+            data={localizedChannelData}
+            categoryKey="name"
+            valueAxes={[
+              {
+                id: "left",
+                width: 40,
+                tickFormatter: (value) => formatNumber(value, { locale, compact: true, maximumFractionDigits: 1 }),
+              },
+              {
+                id: "right",
+                orientation: "right",
+                width: 52,
+                tickFormatter: (value) => formatCurrencyLYD(value * 1000, { locale, compact: true, maximumFractionDigits: 1 }),
+              },
+            ]}
+            tooltipValueFormatter={(value, seriesName) =>
+              seriesName === t("label.value")
+                ? formatCurrencyLYD(Number(value) * 1000, { locale, compact: true, maximumFractionDigits: 1 })
+                : formatNumber(Number(value), { locale })
+            }
+            bars={[
+              {
+                dataKey: "volume",
+                label: t("label.volume"),
+                color: "hsl(var(--chart-1))",
+                yAxisId: "left",
+              },
+              {
+                dataKey: "value",
+                label: t("label.value"),
+                color: "hsl(var(--chart-2))",
+                yAxisId: "right",
+              },
+            ]}
+          />
         </div>
       </ChartCard>
 

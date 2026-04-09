@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
+import AppBarChart from "@/components/charts/AppBarChart";
 import { segmentData, regionalData } from "@/lib/mockData";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
+import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -209,15 +210,25 @@ const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
 
       <ChartCard title={t("segments.detail.channelUsage.title")} subtitle={t("segments.detail.channelUsage.subtitle")}>
         <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={channelUsageData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}%`} />
-              <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={120} />
-              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [`${v}%`, t("segments.tooltip.usage")]} />
-              <Bar dataKey="pct" fill="hsl(217, 71%, 53%)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <AppBarChart
+            data={channelUsageData}
+            categoryKey="channel"
+            layout="vertical"
+            categoryAxisWidth={120}
+            valueAxes={[
+              {
+                tickFormatter: (value) => `${value}%`,
+              },
+            ]}
+            tooltipValueFormatter={(value) => `${value}%`}
+            bars={[
+              {
+                dataKey: "pct",
+                label: t("segments.tooltip.usage"),
+                color: "hsl(var(--chart-1))",
+              },
+            ]}
+          />
         </div>
       </ChartCard>
     </div>
@@ -262,33 +273,42 @@ const SegmentsPage = () => {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <ChartCard title={t("segments.regionalDistribution.title")} subtitle={t("segments.regionalDistribution.subtitle")}>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={localizedRegionalData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="region" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                      <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
-                      <Bar dataKey="customers" radius={[4, 4, 0, 0]}>
-                        {localizedRegionalData.map((_, i) => (
-                          <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <AppBarChart
+                    data={localizedRegionalData}
+                    categoryKey="region"
+                    bars={[
+                      {
+                        dataKey: "customers",
+                        label: t("segments.tooltip.customers"),
+                        color: COLORS[0],
+                        cellColors: localizedRegionalData.map((_, i) => COLORS[i % COLORS.length]),
+                      },
+                    ]}
+                  />
                 </div>
               </ChartCard>
 
               <ChartCard title={t("segments.revenueByRegion.title")} subtitle={t("segments.revenueByRegion.subtitle")}>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={localizedRegionalData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 })} />
-                      <YAxis dataKey="region" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={60} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 }), t("segments.tooltip.revenue")]} />
-                      <Bar dataKey="revenue" fill="hsl(217, 71%, 53%)" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <AppBarChart
+                    data={localizedRegionalData}
+                    categoryKey="region"
+                    layout="vertical"
+                    categoryAxisWidth={64}
+                    valueAxes={[
+                      {
+                        tickFormatter: (value) => formatCurrencyLYD(value, { locale, compact: true, maximumFractionDigits: 1 }),
+                      },
+                    ]}
+                    tooltipValueFormatter={(value) => formatCurrencyLYD(Number(value), { locale, compact: true, maximumFractionDigits: 1 })}
+                    bars={[
+                      {
+                        dataKey: "revenue",
+                        label: t("segments.tooltip.revenue"),
+                        color: "hsl(var(--chart-1))",
+                      },
+                    ]}
+                  />
                 </div>
               </ChartCard>
             </div>

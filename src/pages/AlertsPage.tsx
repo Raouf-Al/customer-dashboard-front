@@ -1,8 +1,9 @@
 import { alerts } from "@/lib/mockData";
 import { Badge } from "@/components/ui/badge";
 import ChartCard from "@/components/dashboard/ChartCard";
+import AppBarChart from "@/components/charts/AppBarChart";
 import { AlertTriangle, Bell, TrendingDown, TrendingUp, Users, CreditCard, Smartphone } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, AreaChart, Area } from "recharts";
+import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie, AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateDataValue } from "@/lib/i18n";
 
@@ -97,21 +98,20 @@ const AlertsPage = () => {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard title={t("alerts.bySeverity.title")} subtitle={t("alerts.bySeverity.subtitle")}>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={severityCounts}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                {severityCounts.map((_, i) => (
-                  <Cell key={i} fill={SEV_COLORS[i]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+          <div className="h-56">
+            <AppBarChart
+              data={severityCounts}
+              categoryKey="name"
+              bars={[
+                {
+                  dataKey: "count",
+                  label: t("alerts.bySeverity.title"),
+                  color: SEV_COLORS[0],
+                  cellColors: SEV_COLORS,
+                },
+              ]}
+            />
+          </div>
         </ChartCard>
 
         <ChartCard title={t("alerts.byType.title")} subtitle={t("alerts.byType.subtitle")}>
