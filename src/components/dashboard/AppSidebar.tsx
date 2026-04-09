@@ -1,12 +1,4 @@
-import {
-  LayoutDashboard,
-  Users,
-  Wallet,
-  UserCircle,
-  Bell,
-  Crown,
-  ShieldAlert,
-} from "lucide-react";
+import { UserCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -23,13 +15,13 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { titleKey: "nav.segments", url: "/", icon: LayoutDashboard },
-  { titleKey: "nav.demographics", url: "/demographics", icon: Users },
-  { titleKey: "nav.accounts", url: "/accounts", icon: Wallet },
+  // { titleKey: "nav.segments", url: "/", icon: LayoutDashboard },
+  // { titleKey: "nav.demographics", url: "/demographics", icon: Users },
+  // { titleKey: "nav.accounts", url: "/accounts", icon: Wallet },
   { titleKey: "nav.customer360", url: "/customer-360", icon: UserCircle },
-  { titleKey: "nav.alerts", url: "/alerts", icon: Bell },
-  { titleKey: "nav.vip", url: "/vip", icon: Crown },
-  { titleKey: "nav.behaviorRisk", url: "/behavior-risk", icon: ShieldAlert },
+  // { titleKey: "nav.alerts", url: "/alerts", icon: Bell },
+  // { titleKey: "nav.vip", url: "/vip", icon: Crown },
+  // { titleKey: "nav.behaviorRisk", url: "/behavior-risk", icon: ShieldAlert },
 ];
 
 const AppSidebar = () => {
