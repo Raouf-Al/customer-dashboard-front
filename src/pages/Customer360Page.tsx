@@ -10,13 +10,14 @@ import { sampleCustomer, accountFinancials, accountMonthlyRevenue, accountIncome
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { formatCurrencyLYD } from "@/lib/formatters";
+import { formatCurrencyLYD, formatNumber } from "@/lib/formatters";
+import { translateDataValue, translateMonthLabel } from "@/lib/i18n";
 
 const ACCOUNTS_PER_PAGE = 4;
 
 const Customer360Page = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { isRTL, locale, t } = useLanguage();
   const c = sampleCustomer;
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [accountPage, setAccountPage] = useState(0);
@@ -54,6 +55,28 @@ const Customer360Page = () => {
   const productsByRev = [...c.topProducts].sort((a, b) => b.revenue - a.revenue || b.usage - a.usage);
   const trnByFreq = [...topTrnCodes].sort((a, b) => b.frequency - a.frequency || b.revenue - a.revenue);
   const trnByRev = [...topTrnCodes].sort((a, b) => b.revenue - a.revenue || b.frequency - a.frequency);
+  const localizedMonthlyRev = monthlyRev.map((point) => ({
+    ...point,
+    month: translateMonthLabel(t, point.month),
+  }));
+  const localizedIncomeDebit = incomeDebit.map((point) => ({
+    ...point,
+    month: translateMonthLabel(t, point.month),
+  }));
+  const localizedProductsByFreq = productsByFreq.map((item) => ({
+    ...item,
+    name: translateDataValue(t, "product", item.name),
+  }));
+  const localizedProductsByRev = productsByRev.map((item) => ({
+    ...item,
+    name: translateDataValue(t, "product", item.name),
+  }));
+  const localizedChannelData = [
+    { name: t("data.channel.onepay"), volume: c.channels.onepay.volume, value: c.channels.onepay.value / 1000 },
+    { name: t("data.channel.lypay"), volume: c.channels.lypay.volume, value: c.channels.lypay.value / 1000 },
+    { name: t("data.channel.mobicash"), volume: c.channels.mobicash.volume, value: c.channels.mobicash.value / 1000 },
+    { name: t("data.channel.sms"), volume: c.channels.sms.volume, value: 0 },
+  ];
 
   // Merged loans table
   const allLoans = [
@@ -93,7 +116,7 @@ const Customer360Page = () => {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/customer-360")}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className={`h-4 w-4 ${isRTL ? "rotate-180" : ""}`} />
         </Button>
         <div>
           <h2 className="text-lg font-semibold text-foreground">{t("c360.title")}</h2>
@@ -110,18 +133,24 @@ const Customer360Page = () => {
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-success text-success-foreground text-[10px]">
-                Open: {openAccounts}
+                {t("c360.openAccounts", { count: formatNumber(openAccounts, { locale }) })}
               </Badge>
               <Badge variant="secondary" className="text-[10px]">
-                Closed: {closedAccounts}
+                {t("c360.closedAccounts", { count: formatNumber(closedAccounts, { locale }) })}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{c.id}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {([
-                [t("label.segment"), c.segment], [t("label.branch"), c.primaryBranch], [t("label.type"), c.customerType],
-                [t("label.accounts"), c.accountCount], [t("label.age"), c.age], [t("label.tenure"), c.tenure],
-                [t("label.kyc"), c.kyc], [t("label.gender"), c.gender], [t("label.nationality"), c.nationality],
+                [t("label.segment"), translateDataValue(t, "segment", c.segment)],
+                [t("label.branch"), c.primaryBranch],
+                [t("label.type"), translateDataValue(t, "customerType", c.customerType)],
+                [t("label.accounts"), formatNumber(c.accountCount, { locale })],
+                [t("label.age"), formatNumber(c.age, { locale })],
+                [t("label.tenure"), c.tenure],
+                [t("label.kyc"), translateDataValue(t, "kyc", c.kyc)],
+                [t("label.gender"), translateDataValue(t, "gender", c.gender)],
+                [t("label.nationality"), translateDataValue(t, "nationality", c.nationality)],
               ] as [string, string | number][]).map(([label, val]) => (
                 <div key={label} className="rounded-md border border-border bg-muted/20 p-2">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
@@ -156,18 +185,18 @@ const Customer360Page = () => {
                 className={`cursor-pointer transition-colors ${acc.id === selectedAccount ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
               >
                 <TableCell className="text-sm font-mono">{acc.number}</TableCell>
-                <TableCell className="text-sm">{acc.class}</TableCell>
+                <TableCell className="text-sm">{translateDataValue(t, "accountClass", acc.class)}</TableCell>
                 <TableCell>
                   <Badge variant={acc.status === "Open" ? "default" : "secondary"} className={`text-[10px] ${acc.status === "Open" ? "bg-success text-success-foreground" : ""}`}>
-                    {acc.status}
+                    {translateDataValue(t, "status", acc.status)}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm text-right font-medium">{formatCurrencyLYD(acc.balance)}</TableCell>
-                <TableCell className="text-sm text-right">{acc.creditScore}</TableCell>
+                <TableCell className="text-sm text-right font-medium">{formatCurrencyLYD(acc.balance, { locale })}</TableCell>
+                <TableCell className="text-sm text-right">{formatNumber(acc.creditScore, { locale })}</TableCell>
                 <TableCell className="text-sm text-right">
-                  <span className={acc.riskScore > 60 ? "text-destructive font-medium" : "text-success font-medium"}>{acc.riskScore}</span>
+                  <span className={acc.riskScore > 60 ? "text-destructive font-medium" : "text-success font-medium"}>{formatNumber(acc.riskScore, { locale })}</span>
                 </TableCell>
-                <TableCell className="text-sm text-right">{acc.recencyDays}</TableCell>
+                <TableCell className="text-sm text-right">{formatNumber(acc.recencyDays, { locale })}</TableCell>
                 <TableCell className="text-sm">{acc.accountAge}</TableCell>
               </TableRow>
             ))}
@@ -175,13 +204,13 @@ const Customer360Page = () => {
         </Table>
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-            <p className="text-xs text-muted-foreground">{t("c360.page")} {accountPage + 1} {t("c360.of")} {totalPages}</p>
+            <p className="text-xs text-muted-foreground">{t("c360.page")} {formatNumber(accountPage + 1, { locale })} {t("c360.of")} {formatNumber(totalPages, { locale })}</p>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-7 text-xs" disabled={accountPage === 0} onClick={() => setAccountPage((p) => p - 1)}>
-                <ChevronLeft className="h-3 w-3 mr-1" />{t("c360.previous")}
+                <ChevronLeft className={`h-3 w-3 ${isRTL ? "ml-1 rotate-180" : "mr-1"}`} />{t("c360.previous")}
               </Button>
               <Button variant="outline" size="sm" className="h-7 text-xs" disabled={accountPage >= totalPages - 1} onClick={() => setAccountPage((p) => p + 1)}>
-                {t("c360.next")}<ChevronRight className="h-3 w-3 ml-1" />
+                {t("c360.next")}<ChevronRight className={`h-3 w-3 ${isRTL ? "mr-1 rotate-180" : "ml-1"}`} />
               </Button>
             </div>
           </div>
@@ -193,24 +222,24 @@ const Customer360Page = () => {
         <div className={`h-2 w-2 rounded-full ${activeAcc ? "bg-primary animate-pulse" : "bg-chart-2"}`} />
         {activeAcc ? (
           <>
-            {t("c360.showingData")} <span className="font-mono font-medium text-foreground">{activeAcc.number}</span> ({activeAcc.class})
+            {t("c360.showingData", { account: activeAcc.number })} <span className="text-foreground">({translateDataValue(t, "accountClass", activeAcc.class)})</span>
           </>
         ) : (
-          <span>Showing customer-level aggregated data</span>
+          <span>{t("c360.customerLevelData")}</span>
         )}
         {activeAcc && (
           <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => setSelectedAccount(null)}>
-            View customer level
+            {t("c360.viewCustomerLevel")}
           </Button>
         )}
       </div>
 
       {/* 3. Financial KPIs — replaced Avg Daily TRN & Min Sub Revenue with ADB & Recency */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard title={t("c360.totalRevenue")} value={formatCurrencyLYD(fin.totalRevenue)} subtitle={t("c360.commission")} />
-        <KPICard title={t("c360.trnVolume")} value={fin.trnVolume} subtitle={t("c360.totalTrn")} />
-        <KPICard title={t("c360.adb")} value={formatCurrencyLYD(fin.adb || 0)} subtitle={t("c360.avgDailyBalance")} />
-        <KPICard title={t("c360.recencyDays")} value={`${fin.recencyDays || 0}`} subtitle={t("c360.daysSinceLastTrn")} />
+        <KPICard title={t("c360.totalRevenue")} value={formatCurrencyLYD(fin.totalRevenue, { locale })} subtitle={t("c360.commission")} />
+        <KPICard title={t("c360.trnVolume")} value={formatNumber(fin.trnVolume, { locale })} subtitle={t("c360.totalTrn")} />
+        <KPICard title={t("c360.adb")} value={formatCurrencyLYD(fin.adb || 0, { locale })} subtitle={t("c360.avgDailyBalance")} />
+        <KPICard title={t("c360.recencyDays")} value={formatNumber(fin.recencyDays || 0, { locale })} subtitle={t("c360.daysSinceLastTrn")} />
       </div>
 
       {/* Salary + Revenue/Frequency Trend + Income/Debit Trend */}
@@ -223,7 +252,7 @@ const Customer360Page = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t("c360.avgMonthlySalary")}</p>
-              <p className="text-lg font-semibold text-card-foreground">{formatCurrencyLYD(c.salary.avgMonthlySalary)}</p>
+              <p className="text-lg font-semibold text-card-foreground">{formatCurrencyLYD(c.salary.avgMonthlySalary, { locale })}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">{t("c360.consistency")}</p>
@@ -241,7 +270,7 @@ const Customer360Page = () => {
         <ChartCard title={t("c360.revenueTrend")}>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyRev}>
+              <LineChart data={localizedMonthlyRev}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
@@ -257,7 +286,7 @@ const Customer360Page = () => {
         <ChartCard title={t("c360.incomeDebit")}>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={incomeDebit}>
+              <LineChart data={localizedIncomeDebit}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
@@ -274,22 +303,22 @@ const Customer360Page = () => {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title={t("c360.topProductsFreq")}>
           <div className="space-y-2">
-            {productsByFreq.map((p) => (
+            {localizedProductsByFreq.map((p) => (
               <div key={p.name} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate">{p.name}</span>
                 <Progress value={p.usage} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-10 text-right">{p.usage}</span>
+                <span className="text-xs text-muted-foreground w-10 text-right">{formatNumber(p.usage, { locale })}</span>
               </div>
             ))}
           </div>
         </ChartCard>
         <ChartCard title={t("c360.topProductsRev")}>
           <div className="space-y-2">
-            {productsByRev.map((p) => (
+            {localizedProductsByRev.map((p) => (
               <div key={p.name} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate">{p.name}</span>
-                <Progress value={(p.revenue / productsByRev[0].revenue) * 100} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(p.revenue, { compact: true, maximumFractionDigits: 1 })}</span>
+                <Progress value={(p.revenue / localizedProductsByRev[0].revenue) * 100} className="h-1.5 flex-1" />
+                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(p.revenue, { locale, compact: true, maximumFractionDigits: 1 })}</span>
               </div>
             ))}
           </div>
@@ -303,7 +332,7 @@ const Customer360Page = () => {
               <div key={t2.code} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate font-mono">{t2.code}</span>
                 <Progress value={(t2.frequency / trnByFreq[0].frequency) * 100} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-10 text-right">{t2.frequency}</span>
+                <span className="text-xs text-muted-foreground w-10 text-right">{formatNumber(t2.frequency, { locale })}</span>
               </div>
             ))}
           </div>
@@ -314,7 +343,7 @@ const Customer360Page = () => {
               <div key={t2.code} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate font-mono">{t2.code}</span>
                 <Progress value={(t2.revenue / trnByRev[0].revenue) * 100} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(t2.revenue, { compact: true, maximumFractionDigits: 1 })}</span>
+                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(t2.revenue, { locale, compact: true, maximumFractionDigits: 1 })}</span>
               </div>
             ))}
           </div>
@@ -325,12 +354,7 @@ const Customer360Page = () => {
       <ChartCard title={t("c360.channelUtil")} subtitle={t("c360.volValueChannel")}>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={[
-              { name: "Onepay", volume: c.channels.onepay.volume, value: c.channels.onepay.value / 1000 },
-              { name: "Lypay", volume: c.channels.lypay.volume, value: c.channels.lypay.value / 1000 },
-              { name: "MobiCash", volume: c.channels.mobicash.volume, value: c.channels.mobicash.value / 1000 },
-              { name: "SMS", volume: c.channels.sms.volume, value: 0 },
-            ]}>
+            <BarChart data={localizedChannelData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" tick={{ fontSize: 10 }} />
               <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
@@ -349,8 +373,8 @@ const Customer360Page = () => {
           {/* Subscriptions */}
           <div className="rounded-md border border-border p-3">
             <p className="text-xs font-medium text-muted-foreground">{t("c360.mobileApp")}</p>
-            <Badge className={`mt-1 text-[10px] ${c.subscriptions.mobileApp.status === "Active" ? "bg-success text-success-foreground" : ""}`}>{c.subscriptions.mobileApp.status}</Badge>
-            <p className="mt-2 text-xs text-muted-foreground">{t("c360.loginFreq")}: {c.subscriptions.mobileApp.loginFreq}/mo</p>
+            <Badge className={`mt-1 text-[10px] ${c.subscriptions.mobileApp.status === "Active" ? "bg-success text-success-foreground" : ""}`}>{translateDataValue(t, "status", c.subscriptions.mobileApp.status)}</Badge>
+            <p className="mt-2 text-xs text-muted-foreground">{t("c360.loginFreq")}: {formatNumber(c.subscriptions.mobileApp.loginFreq, { locale })}/{t("global.perMonth")}</p>
           </div>
           <div className="rounded-md border border-border p-3">
             <p className="text-xs font-medium text-muted-foreground">{t("c360.whatsapp")}</p>
@@ -359,19 +383,19 @@ const Customer360Page = () => {
           </div>
           <div className="rounded-md border border-border p-3">
             <p className="text-xs font-medium text-muted-foreground">{t("c360.smsAlerts")}</p>
-            <Badge variant="secondary" className="mt-1 text-[10px]">{c.subscriptions.smsAlerts.tier}</Badge>
-            <p className="mt-2 text-xs text-muted-foreground">{formatCurrencyLYD(c.subscriptions.smsAlerts.price)}/mo</p>
+            <Badge variant="secondary" className="mt-1 text-[10px]">{translateDataValue(t, "status", c.subscriptions.smsAlerts.tier)}</Badge>
+            <p className="mt-2 text-xs text-muted-foreground">{formatCurrencyLYD(c.subscriptions.smsAlerts.price, { locale })}/{t("global.perMonth")}</p>
           </div>
           {/* Cards */}
           {c.cards.map((card) => (
             <div key={card.type} className="rounded-md border border-border p-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium text-card-foreground">{card.type}</span>
-                <Badge className={`text-[10px] ${card.status === "Active" ? "bg-success text-success-foreground" : ""}`}>{card.status}</Badge>
+                <Badge className={`text-[10px] ${card.status === "Active" ? "bg-success text-success-foreground" : ""}`}>{translateDataValue(t, "status", card.status)}</Badge>
               </div>
               {card.limit > 0 && (
                 <>
-                  <p className="text-[10px] text-muted-foreground">{t("label.limit")}: {formatCurrencyLYD(card.limit, { compact: true, maximumFractionDigits: 0 })}</p>
+                  <p className="text-[10px] text-muted-foreground">{t("label.limit")}: {formatCurrencyLYD(card.limit, { locale, compact: true, maximumFractionDigits: 0 })}</p>
                   <div className="mt-1">
                     <div className="flex justify-between text-[10px] mb-0.5"><span className="text-muted-foreground">{t("label.utilization")}</span><span>{card.utilization}%</span></div>
                     <Progress value={card.utilization} className="h-1.5" />
@@ -424,9 +448,9 @@ const Customer360Page = () => {
                 <TableCell className="text-sm font-mono">{l.id}</TableCell>
                 <TableCell>
                   <div className="text-sm font-mono">{l.accountNo}</div>
-                  <div className="text-[10px] text-muted-foreground">{l.accountClass}</div>
+                  <div className="text-[10px] text-muted-foreground">{translateDataValue(t, "accountClass", l.accountClass)}</div>
                 </TableCell>
-                <TableCell className="text-sm">{l.type}</TableCell>
+                <TableCell className="text-sm">{translateDataValue(t, "loanType", l.type)}</TableCell>
                 <TableCell>
                   <Badge className={`text-[10px] ${l.loanStatus === "Active" ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}`}>
                     {l.loanStatus === "Active" ? t("c360.active") : t("c360.closed")}
@@ -437,11 +461,11 @@ const Customer360Page = () => {
                     <span className={l.behavior.includes("Delayed") ? "text-warning font-medium" : "text-success font-medium"}>
                       {l.behavior.includes("Delayed") ? t("c360.delayed") : t("c360.onTime")}
                     </span>
-                  ) : "—"}
+                  ) : t("global.notAvailable")}
                 </TableCell>
-                <TableCell className="text-sm text-right">{l.outstanding > 0 ? formatCurrencyLYD(l.outstanding, { compact: true, maximumFractionDigits: 1 }) : "—"}</TableCell>
-                <TableCell className="text-sm text-right">{formatCurrencyLYD(l.paid, { compact: true, maximumFractionDigits: 1 })}</TableCell>
-                <TableCell className="text-sm text-right">{l.installment > 0 ? formatCurrencyLYD(l.installment) : "—"}</TableCell>
+                <TableCell className="text-sm text-right">{l.outstanding > 0 ? formatCurrencyLYD(l.outstanding, { locale, compact: true, maximumFractionDigits: 1 }) : t("global.notAvailable")}</TableCell>
+                <TableCell className="text-sm text-right">{formatCurrencyLYD(l.paid, { locale, compact: true, maximumFractionDigits: 1 })}</TableCell>
+                <TableCell className="text-sm text-right">{l.installment > 0 ? formatCurrencyLYD(l.installment, { locale }) : t("global.notAvailable")}</TableCell>
                 <TableCell className="text-sm">{l.nextPayment}</TableCell>
               </TableRow>
             ))}

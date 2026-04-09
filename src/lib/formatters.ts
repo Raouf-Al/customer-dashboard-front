@@ -2,32 +2,72 @@ type CurrencyFormatOptions = {
   compact?: boolean;
   minimumFractionDigits?: number;
   maximumFractionDigits?: number;
+  locale?: string;
 };
 
-const numberFormatterCache = new Map<string, Intl.NumberFormat>();
+const currencyFormatterCache = new Map<string, Intl.NumberFormat>();
+const decimalFormatterCache = new Map<string, Intl.NumberFormat>();
+
+function resolveLocale(locale?: string) {
+  if (locale) return locale;
+  if (typeof document !== "undefined" && document.documentElement.lang === "ar") {
+    return "ar-LY";
+  }
+  return "en-LY";
+}
 
 function getNumberFormatter(options: CurrencyFormatOptions = {}) {
   const {
     compact = false,
     minimumFractionDigits = compact ? 0 : 0,
     maximumFractionDigits = compact ? 1 : 0,
+    locale,
   } = options;
+  const resolvedLocale = resolveLocale(locale);
 
-  const cacheKey = `${compact}-${minimumFractionDigits}-${maximumFractionDigits}`;
-  const cachedFormatter = numberFormatterCache.get(cacheKey);
+  const cacheKey = `${resolvedLocale}-${compact}-${minimumFractionDigits}-${maximumFractionDigits}`;
+  const cachedFormatter = currencyFormatterCache.get(cacheKey);
   if (cachedFormatter) return cachedFormatter;
 
-  const formatter = new Intl.NumberFormat("en-LY", {
+  const formatter = new Intl.NumberFormat(resolvedLocale, {
+    style: "currency",
+    currency: "LYD",
+    currencyDisplay: "code",
+    notation: compact ? "compact" : "standard",
+    minimumFractionDigits,
+    maximumFractionDigits,
+  });
+
+  currencyFormatterCache.set(cacheKey, formatter);
+  return formatter;
+}
+
+export function formatNumber(
+  value: number,
+  options: CurrencyFormatOptions = {},
+) {
+  const {
+    compact = false,
+    minimumFractionDigits = compact ? 0 : 0,
+    maximumFractionDigits = compact ? 1 : 0,
+    locale,
+  } = options;
+  const resolvedLocale = resolveLocale(locale);
+  const cacheKey = `${resolvedLocale}-${compact}-${minimumFractionDigits}-${maximumFractionDigits}`;
+  const cachedFormatter = decimalFormatterCache.get(cacheKey);
+  if (cachedFormatter) return cachedFormatter.format(value);
+
+  const formatter = new Intl.NumberFormat(resolvedLocale, {
     style: "decimal",
     notation: compact ? "compact" : "standard",
     minimumFractionDigits,
     maximumFractionDigits,
   });
 
-  numberFormatterCache.set(cacheKey, formatter);
-  return formatter;
+  decimalFormatterCache.set(cacheKey, formatter);
+  return formatter.format(value);
 }
 
 export function formatCurrencyLYD(value: number, options: CurrencyFormatOptions = {}) {
-  return `${getNumberFormatter(options).format(value)} LYD`;
+  return getNumberFormatter(options).format(value);
 }

@@ -1,4 +1,10 @@
-import { Users, CreditCard, DollarSign, TrendingUp, Activity, BarChart3 } from "lucide-react";
+import {
+  Users,
+  CreditCard,
+  DollarSign,
+  Activity,
+  BarChart3,
+} from "lucide-react";
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
 import { segmentData, regionalData } from "@/lib/mockData";
@@ -6,6 +12,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatCurrencyLYD, formatNumber } from "@/lib/formatters";
+import { translateDataValue, translateMonthLabel } from "@/lib/i18n";
 
 const COLORS = [
   "hsl(217, 71%, 53%)",
@@ -97,61 +106,97 @@ const segmentDetails: Record<string, {
 
 const PIE_COLORS = ["hsl(217, 71%, 53%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 60%)"];
 
+const segmentDescriptionKeys: Record<string, string> = {
+  "Retail Premium": "segments.detail.description.retailPremium",
+  "Retail Standard": "segments.detail.description.retailStandard",
+  "Corporate SME": "segments.detail.description.corporateSme",
+  "Corporate Enterprise": "segments.detail.description.corporateEnterprise",
+  "Private Banking": "segments.detail.description.privateBanking",
+  "Digital Only": "segments.detail.description.digitalOnly",
+};
+
 const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
+  const { locale, t } = useLanguage();
   const details = segmentDetails[seg.segment];
   if (!details) return null;
 
+  const revenueTrendData = details.monthlyTrend.map((point) => ({
+    ...point,
+    month: translateMonthLabel(t, point.month),
+  }));
+  const productMixData = details.productMix.map((item) => ({
+    ...item,
+    name: translateDataValue(t, "product", item.name),
+  }));
+  const channelUsageData = details.channelUsage.map((item) => ({
+    ...item,
+    channel: translateDataValue(t, "channel", item.channel),
+  }));
+
   return (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground">{details.description}</p>
+      <p className="text-sm text-muted-foreground">
+        {t(segmentDescriptionKeys[seg.segment] ?? details.description)}
+      </p>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <KPICard title="Customers" value={seg.customers.toLocaleString()} change={seg.growth} icon={<Users className="h-4 w-4" />} />
-        <KPICard title="Accounts" value={seg.accounts.toLocaleString()} change={seg.growth * 0.7} icon={<CreditCard className="h-4 w-4" />} />
-        <KPICard title="Revenue" value={`$${(seg.revenue / 1e6).toFixed(1)}M`} change={seg.growth * 1.2} icon={<DollarSign className="h-4 w-4" />} />
-        <KPICard title="Avg Balance" value={`$${details.avgBalance >= 1e6 ? (details.avgBalance / 1e6).toFixed(1) + "M" : (details.avgBalance / 1e3).toFixed(0) + "K"}`} change={seg.growth * 0.5} icon={<BarChart3 className="h-4 w-4" />} />
-        <KPICard title="Retention" value={`${details.retentionRate}%`} change={1.2} icon={<Activity className="h-4 w-4" />} />
+        <KPICard title={t("segments.detail.customers")} value={formatNumber(seg.customers, { locale })} change={seg.growth} icon={<Users className="h-4 w-4" />} />
+        <KPICard title={t("segments.detail.accounts")} value={formatNumber(seg.accounts, { locale })} change={seg.growth * 0.7} icon={<CreditCard className="h-4 w-4" />} />
+        <KPICard title={t("segments.detail.revenue")} value={formatCurrencyLYD(seg.revenue, { locale, compact: true, maximumFractionDigits: 1 })} change={seg.growth * 1.2} icon={<DollarSign className="h-4 w-4" />} />
+        <KPICard title={t("segments.detail.avgBalance")} value={formatCurrencyLYD(details.avgBalance, { locale, compact: true, maximumFractionDigits: 1 })} change={seg.growth * 0.5} icon={<BarChart3 className="h-4 w-4" />} />
+        <KPICard title={t("segments.detail.retention")} value={`${formatNumber(details.retentionRate, { locale, maximumFractionDigits: 1 })}%`} change={1.2} icon={<Activity className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">NPS Score</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("segments.detail.npsScore")}</p>
           <p className="text-3xl font-bold text-card-foreground mt-1">{details.nps}</p>
-          <p className="text-xs text-muted-foreground mt-1">{details.nps >= 70 ? "Excellent" : details.nps >= 50 ? "Good" : "Needs Improvement"}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {details.nps >= 70
+              ? t("segments.detail.excellent")
+              : details.nps >= 50
+                ? t("segments.detail.good")
+                : t("segments.detail.needsImprovement")}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Avg Transactions / Mo</p>
-          <p className="text-3xl font-bold text-card-foreground mt-1">{details.avgTransactions}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("segments.detail.avgTransactions")}</p>
+          <p className="text-3xl font-bold text-card-foreground mt-1">{formatNumber(details.avgTransactions, { locale })}</p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Digital Adoption</p>
-          <p className="text-3xl font-bold text-card-foreground mt-1">{details.digitalAdoption}%</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("segments.detail.digitalAdoption")}</p>
+          <p className="text-3xl font-bold text-card-foreground mt-1">{formatNumber(details.digitalAdoption, { locale })}%</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ChartCard title="Revenue & Customer Trend" subtitle="6-month trend">
+        <ChartCard title={t("segments.detail.revenueTrend.title")} subtitle={t("segments.detail.revenueTrend.subtitle")}>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={details.monthlyTrend}>
+              <LineChart data={revenueTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1e6).toFixed(1)}M`} />
+                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 })} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
-                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="hsl(217, 71%, 53%)" strokeWidth={2} dot={{ r: 3 }} name="Revenue" />
-                <Line yAxisId="right" type="monotone" dataKey="customers" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} name="Customers" />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} formatter={(value: number, name: string) => [
+                  name === t("segments.tooltip.revenue")
+                    ? formatCurrencyLYD(value, { locale, compact: true, maximumFractionDigits: 1 })
+                    : formatNumber(value, { locale }),
+                  name,
+                ]} />
+                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="hsl(217, 71%, 53%)" strokeWidth={2} dot={{ r: 3 }} name={t("segments.tooltip.revenue")} />
+                <Line yAxisId="right" type="monotone" dataKey="customers" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} name={t("segments.tooltip.customers")} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
-        <ChartCard title="Product Mix" subtitle="Distribution by product type">
+        <ChartCard title={t("segments.detail.productMix.title")} subtitle={t("segments.detail.productMix.subtitle")}>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={details.productMix} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name} ${value}%`}>
-                  {details.productMix.map((_, i) => (
+                <Pie data={productMixData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name} ${value}%`}>
+                  {productMixData.map((_, i) => (
                     <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                   ))}
                 </Pie>
@@ -162,14 +207,14 @@ const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
         </ChartCard>
       </div>
 
-      <ChartCard title="Channel Usage" subtitle="Percentage of transactions by channel">
+      <ChartCard title={t("segments.detail.channelUsage.title")} subtitle={t("segments.detail.channelUsage.subtitle")}>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={details.channelUsage} layout="vertical">
+            <BarChart data={channelUsageData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}%`} />
               <YAxis dataKey="channel" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={120} />
-              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [`${v}%`, "Usage"]} />
+              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [`${v}%`, t("segments.tooltip.usage")]} />
               <Bar dataKey="pct" fill="hsl(217, 71%, 53%)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -180,44 +225,51 @@ const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
 };
 
 const SegmentsPage = () => {
+  const { locale, t } = useLanguage();
   const totalCustomers = segmentData.reduce((s, d) => s + d.customers, 0);
   const totalAccounts = segmentData.reduce((s, d) => s + d.accounts, 0);
   const totalRevenue = segmentData.reduce((s, d) => s + d.revenue, 0);
+  const localizedRegionalData = regionalData.map((item) => ({
+    ...item,
+    region: translateDataValue(t, "region", item.region),
+  }));
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-foreground">Segments</h2>
-        <p className="text-sm text-muted-foreground">Explore segment performance and drill into individual segments</p>
+        <h2 className="text-lg font-semibold text-foreground">{t("segments.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("segments.subtitle")}</p>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">{t("segments.overview")}</TabsTrigger>
           {segmentData.map((seg) => (
-            <TabsTrigger key={seg.segment} value={seg.segment}>{seg.segment}</TabsTrigger>
+            <TabsTrigger key={seg.segment} value={seg.segment}>
+              {translateDataValue(t, "segment", seg.segment)}
+            </TabsTrigger>
           ))}
         </TabsList>
 
         <TabsContent value="overview">
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <KPICard title="Total Customers" value={totalCustomers.toLocaleString()} change={8.4} icon={<Users className="h-4 w-4" />} />
-              <KPICard title="Total Accounts" value={totalAccounts.toLocaleString()} change={6.2} icon={<CreditCard className="h-4 w-4" />} />
-              <KPICard title="Total Revenue" value={`$${(totalRevenue / 1e6).toFixed(1)}M`} change={11.7} icon={<DollarSign className="h-4 w-4" />} />
+              <KPICard title={t("segments.totalCustomers")} value={formatNumber(totalCustomers, { locale })} change={8.4} icon={<Users className="h-4 w-4" />} />
+              <KPICard title={t("segments.totalAccounts")} value={formatNumber(totalAccounts, { locale })} change={6.2} icon={<CreditCard className="h-4 w-4" />} />
+              <KPICard title={t("segments.totalRevenue")} value={formatCurrencyLYD(totalRevenue, { locale, compact: true, maximumFractionDigits: 1 })} change={11.7} icon={<DollarSign className="h-4 w-4" />} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <ChartCard title="Regional Distribution" subtitle="Customer count by region">
+              <ChartCard title={t("segments.regionalDistribution.title")} subtitle={t("segments.regionalDistribution.subtitle")}>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={regionalData}>
+                    <BarChart data={localizedRegionalData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="region" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                       <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                       <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} />
                       <Bar dataKey="customers" radius={[4, 4, 0, 0]}>
-                        {regionalData.map((_, i) => (
+                        {localizedRegionalData.map((_, i) => (
                           <Cell key={i} fill={COLORS[i % COLORS.length]} />
                         ))}
                       </Bar>
@@ -226,14 +278,14 @@ const SegmentsPage = () => {
                 </div>
               </ChartCard>
 
-              <ChartCard title="Revenue by Region" subtitle="Total revenue per region">
+              <ChartCard title={t("segments.revenueByRegion.title")} subtitle={t("segments.revenueByRegion.subtitle")}>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={regionalData} layout="vertical">
+                    <BarChart data={localizedRegionalData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `$${(v / 1e6).toFixed(1)}M`} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 })} />
                       <YAxis dataKey="region" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={60} />
-                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [`$${(v / 1e6).toFixed(2)}M`, "Revenue"]} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} formatter={(v: number) => [formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 }), t("segments.tooltip.revenue")]} />
                       <Bar dataKey="revenue" fill="hsl(217, 71%, 53%)" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -241,32 +293,32 @@ const SegmentsPage = () => {
               </ChartCard>
             </div>
 
-            <ChartCard title="Segment Performance Breakdown" subtitle="Detailed metrics per segment">
+            <ChartCard title={t("segments.breakdown.title")} subtitle={t("segments.breakdown.subtitle")}>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-xs">Segment</TableHead>
-                      <TableHead className="text-xs text-right">Customers</TableHead>
-                      <TableHead className="text-xs text-right">Accounts</TableHead>
-                      <TableHead className="text-xs text-right">Revenue</TableHead>
-                      <TableHead className="text-xs text-right">Growth</TableHead>
-                      <TableHead className="text-xs">Region</TableHead>
+                      <TableHead className="text-xs">{t("segments.table.segment")}</TableHead>
+                      <TableHead className="text-xs text-right">{t("segments.table.customers")}</TableHead>
+                      <TableHead className="text-xs text-right">{t("segments.table.accounts")}</TableHead>
+                      <TableHead className="text-xs text-right">{t("segments.table.revenue")}</TableHead>
+                      <TableHead className="text-xs text-right">{t("segments.table.growth")}</TableHead>
+                      <TableHead className="text-xs">{t("segments.table.region")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {segmentData.map((seg) => (
                       <TableRow key={seg.segment}>
-                        <TableCell className="text-sm font-medium">{seg.segment}</TableCell>
-                        <TableCell className="text-sm text-right">{seg.customers.toLocaleString()}</TableCell>
-                        <TableCell className="text-sm text-right">{seg.accounts.toLocaleString()}</TableCell>
-                        <TableCell className="text-sm text-right">${(seg.revenue / 1e6).toFixed(1)}M</TableCell>
+                        <TableCell className="text-sm font-medium">{translateDataValue(t, "segment", seg.segment)}</TableCell>
+                        <TableCell className="text-sm text-right">{formatNumber(seg.customers, { locale })}</TableCell>
+                        <TableCell className="text-sm text-right">{formatNumber(seg.accounts, { locale })}</TableCell>
+                        <TableCell className="text-sm text-right">{formatCurrencyLYD(seg.revenue, { locale, compact: true, maximumFractionDigits: 1 })}</TableCell>
                         <TableCell className="text-right">
                           <Badge variant={seg.growth >= 10 ? "default" : "secondary"} className={`text-xs ${seg.growth >= 10 ? "bg-success text-success-foreground" : ""}`}>
-                            +{seg.growth}%
+                            +{formatNumber(seg.growth, { locale, maximumFractionDigits: 1 })}%
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{seg.region}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{translateDataValue(t, "region", seg.region)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

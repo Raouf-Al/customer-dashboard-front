@@ -23,10 +23,15 @@ const GlobalHeader = () => {
   const [dateFrom, setDateFrom] = useState<Date>(new Date(2024, 0, 1));
   const [dateTo, setDateTo] = useState<Date>(new Date());
   const [currency, setCurrency] = useState<"local" | "usd">("local");
-  const { lang, setLang, t } = useLanguage();
+  const { dateLocale, isRTL, lang, setLang, t } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-6 pl-2">
+    <header
+      className={cn(
+        "sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-6",
+        isRTL ? "pr-2" : "pl-2",
+      )}
+    >
       <div className="flex items-center gap-2.5">
         <SidebarTrigger className="h-8 w-8 shrink-0" />
         <div className="h-5 w-px bg-border" />
@@ -41,6 +46,7 @@ const GlobalHeader = () => {
         <div className="flex h-8 items-center rounded-md border border-border bg-muted p-0.5">
           <button
             onClick={() => setLang("en")}
+            title={t("app.language.en")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
               lang === "en"
@@ -52,6 +58,7 @@ const GlobalHeader = () => {
           </button>
           <button
             onClick={() => setLang("ar")}
+            title={t("app.language.ar")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
               lang === "ar"
@@ -68,19 +75,24 @@ const GlobalHeader = () => {
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
               <CalendarDays className="h-3.5 w-3.5" />
-              {format(dateFrom, "MMM yyyy")} – {format(dateTo, "MMM yyyy")}
+              {format(dateFrom, "MMM yyyy", { locale: dateLocale })} -{" "}
+              {format(dateTo, "MMM yyyy", { locale: dateLocale })}
               <ChevronDown className="h-3 w-3" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <div className="flex">
               <Calendar
+                dir={isRTL ? "rtl" : "ltr"}
+                locale={dateLocale}
                 mode="single"
                 selected={dateFrom}
                 onSelect={(d) => d && setDateFrom(d)}
                 className={cn("p-3 pointer-events-auto")}
               />
               <Calendar
+                dir={isRTL ? "rtl" : "ltr"}
+                locale={dateLocale}
                 mode="single"
                 selected={dateTo}
                 onSelect={(d) => d && setDateTo(d)}
