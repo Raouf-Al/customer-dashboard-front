@@ -1,9 +1,20 @@
 import { useState } from "react";
-import { CalendarDays, ChevronDown, Building2, Globe } from "lucide-react";
+import { CalendarDays, ChevronDown, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -15,10 +26,14 @@ const GlobalHeader = () => {
   const { lang, setLang, t } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-6">
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-card px-6 pl-2">
+      <div className="flex items-center gap-2.5">
+        <SidebarTrigger className="h-8 w-8 shrink-0" />
+        <div className="h-5 w-px bg-border" />
         <Building2 className="h-4 w-4 text-primary" />
-        <h1 className="text-sm font-semibold text-foreground">{t("app.title")}</h1>
+        <h1 className="text-sm font-semibold text-foreground">
+          {t("app.title")}
+        </h1>
       </div>
 
       <div className="flex items-center gap-3">
@@ -28,7 +43,9 @@ const GlobalHeader = () => {
             onClick={() => setLang("en")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-              lang === "en" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              lang === "en"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground",
             )}
           >
             EN
@@ -37,7 +54,9 @@ const GlobalHeader = () => {
             onClick={() => setLang("ar")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-              lang === "ar" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              lang === "ar"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground",
             )}
           >
             AR
@@ -55,8 +74,18 @@ const GlobalHeader = () => {
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <div className="flex">
-              <Calendar mode="single" selected={dateFrom} onSelect={(d) => d && setDateFrom(d)} className={cn("p-3 pointer-events-auto")} />
-              <Calendar mode="single" selected={dateTo} onSelect={(d) => d && setDateTo(d)} className={cn("p-3 pointer-events-auto")} />
+              <Calendar
+                mode="single"
+                selected={dateFrom}
+                onSelect={(d) => d && setDateFrom(d)}
+                className={cn("p-3 pointer-events-auto")}
+              />
+              <Calendar
+                mode="single"
+                selected={dateTo}
+                onSelect={(d) => d && setDateTo(d)}
+                className={cn("p-3 pointer-events-auto")}
+              />
             </div>
           </PopoverContent>
         </Popover>
@@ -94,7 +123,9 @@ const GlobalHeader = () => {
             onClick={() => setCurrency("local")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-              currency === "local" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              currency === "local"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground",
             )}
           >
             {t("currency.lcy")}
@@ -103,7 +134,9 @@ const GlobalHeader = () => {
             onClick={() => setCurrency("usd")}
             className={cn(
               "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-              currency === "usd" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+              currency === "usd"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground",
             )}
           >
             {t("currency.usd")}

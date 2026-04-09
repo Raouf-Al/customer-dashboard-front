@@ -8,7 +8,6 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Sidebar,
@@ -36,20 +35,23 @@ const navItems = [
 const AppSidebar = () => {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
   const { t } = useLanguage();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2.5">
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:p-2">
+        <div className="flex items-center gap-2.5 overflow-hidden group-data-[collapsible=icon]:justify-center">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-xs font-bold">
             BA
           </div>
           {!collapsed && (
-            <div>
-              <p className="text-sm font-semibold text-sidebar-accent-foreground">{t("app.brand")}</p>
-              <p className="text-[10px] text-sidebar-muted">{t("app.subtitle")}</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">
+                {t("app.brand")}
+              </p>
+              <p className="truncate text-[10px] text-sidebar-muted">
+                {t("app.subtitle")}
+              </p>
             </div>
           )}
         </div>
@@ -70,7 +72,11 @@ const AppSidebar = () => {
                       className="gap-2.5 rounded-md px-3 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
+                      <item.icon
+                        className={
+                          collapsed ? "h-5 w-5 shrink-0" : "h-4 w-4 shrink-0"
+                        }
+                      />
                       {!collapsed && <span>{t(item.titleKey)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
