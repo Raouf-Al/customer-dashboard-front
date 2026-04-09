@@ -8,14 +8,15 @@ import {
 import KPICard from "@/components/dashboard/KPICard";
 import ChartCard from "@/components/dashboard/ChartCard";
 import AppBarChart from "@/components/charts/AppBarChart";
+import AppAreaChart from "@/components/charts/AppAreaChart";
 import { segmentData, regionalData } from "@/lib/mockData";
-import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatCurrencyLYD, formatNumber } from "@/lib/formatters";
-import { translateDataValue, translateMonthLabel } from "@/lib/i18n";
+import { translateDataValue } from "@/lib/i18n";
 
 const COLORS = [
   "hsl(217, 71%, 53%)",
@@ -121,10 +122,7 @@ const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
   const details = segmentDetails[seg.segment];
   if (!details) return null;
 
-  const revenueTrendData = details.monthlyTrend.map((point) => ({
-    ...point,
-    month: translateMonthLabel(t, point.month),
-  }));
+  const revenueTrendData = details.monthlyTrend;
   const productMixData = details.productMix.map((item) => ({
     ...item,
     name: translateDataValue(t, "product", item.name),
@@ -173,22 +171,52 @@ const SegmentDetailTab = ({ seg }: { seg: typeof segmentData[0] }) => {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <ChartCard title={t("segments.detail.revenueTrend.title")} subtitle={t("segments.detail.revenueTrend.subtitle")}>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => formatCurrencyLYD(v, { locale, compact: true, maximumFractionDigits: 1 })} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }} formatter={(value: number, name: string) => [
-                  name === t("segments.tooltip.revenue")
-                    ? formatCurrencyLYD(value, { locale, compact: true, maximumFractionDigits: 1 })
-                    : formatNumber(value, { locale }),
-                  name,
-                ]} />
-                <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="hsl(217, 71%, 53%)" strokeWidth={2} dot={{ r: 3 }} name={t("segments.tooltip.revenue")} />
-                <Line yAxisId="right" type="monotone" dataKey="customers" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} name={t("segments.tooltip.customers")} />
-              </LineChart>
-            </ResponsiveContainer>
+            <AppAreaChart
+              data={revenueTrendData}
+              categoryKey="month"
+              valueAxes={[
+                {
+                  id: "left",
+                  width: 58,
+                  format: {
+                    kind: "currency",
+                    compact: true,
+                    maximumFractionDigits: 1,
+                  },
+                },
+                {
+                  id: "right",
+                  orientation: "right",
+                  width: 44,
+                  format: {
+                    kind: "number",
+                  },
+                },
+              ]}
+              tooltipValueFormatter={(value, seriesName) =>
+                seriesName === t("segments.tooltip.revenue")
+                  ? formatCurrencyLYD(Number(value), { locale, compact: true, maximumFractionDigits: 1 })
+                  : formatNumber(Number(value), { locale })
+              }
+              areas={[
+                {
+                  dataKey: "revenue",
+                  label: t("segments.tooltip.revenue"),
+                  color: "hsl(var(--chart-1))",
+                  yAxisId: "left",
+                  strokeWidth: 3,
+                },
+                {
+                  dataKey: "customers",
+                  label: t("segments.tooltip.customers"),
+                  color: "hsl(var(--chart-2))",
+                  yAxisId: "right",
+                  strokeWidth: 3,
+                  fillOpacity: 0.18,
+                  gradientOpacity: { from: 0.42, to: 0.05 },
+                },
+              ]}
+            />
           </div>
         </ChartCard>
 

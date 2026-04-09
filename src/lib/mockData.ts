@@ -95,7 +95,7 @@ export const sampleCustomer = {
   segment: "Retail Premium",
   primaryBranch: "Mumbai Central",
   customerType: "Individual",
-  status: "Active",
+  status: "Open",
   accountCount: 4,
   age: 38,
   tenure: "7 years",
@@ -109,9 +109,8 @@ export const sampleCustomer = {
     { id: "ACC-004", number: "****6677", class: "Savings", status: "Closed", balance: 0, creditScore: 690, riskScore: 72, recencyDays: 180, accountAge: "1y 4m" },
   ],
   salary: {
-    receivesSalary: true,
-    avgMonthlySalary: 185000,
-    consistency: [true, true, true, false, true, true],
+    salaryReceivingAccounts: 2,
+    averageAcrossAccounts: 156250,
   },
   financials: {
     totalRevenue: 42800,
@@ -158,12 +157,12 @@ export const sampleCustomer = {
   },
   loans: {
     active: [
-      { id: "LN-001", type: "Home Loan", outstanding: 4500000, rate: 8.5, maturity: "2035-06-15" },
-      { id: "LN-002", type: "Personal Loan", outstanding: 320000, rate: 12.0, maturity: "2026-03-01" },
+      { id: "LN-001", accountId: "ACC-002", type: "Home Loan", outstanding: 4500000, rate: 8.5, maturity: "2035-06-15" },
+      { id: "LN-002", accountId: "ACC-001", type: "Personal Loan", outstanding: 320000, rate: 12.0, maturity: "2026-03-01" },
     ],
     closed: [
-      { id: "LN-003", type: "Car Loan", amount: 800000, behavior: "On-time" },
-      { id: "LN-004", type: "Education Loan", amount: 1200000, behavior: "Delayed (2x)" },
+      { id: "LN-003", accountId: "ACC-001", type: "Car Loan", amount: 800000, behavior: "On-time" },
+      { id: "LN-004", accountId: "ACC-004", type: "Education Loan", amount: 1200000, behavior: "Delayed (2x)" },
     ],
     creditScore: 742,
     credibility: "Good",
@@ -235,6 +234,32 @@ export const accountMonthlyRevenue: Record<string, typeof sampleCustomer.monthly
     { month: "Oct", revenue: 800, volume: 1 }, { month: "Nov", revenue: 900, volume: 2 }, { month: "Dec", revenue: 800, volume: 1 },
   ],
   "ACC-004": Array(12).fill(null).map((_, i) => ({ month: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i], revenue: 0, volume: 0 })),
+};
+
+export const accountSalaryDetails: Record<
+  string,
+  { receivesSalary: boolean; avgMonthlySalary: number; consistency: boolean[] }
+> = {
+  "ACC-001": {
+    receivesSalary: true,
+    avgMonthlySalary: 185000,
+    consistency: [true, true, true, false, true, true],
+  },
+  "ACC-002": {
+    receivesSalary: true,
+    avgMonthlySalary: 440000,
+    consistency: [true, true, false, true, true, true],
+  },
+  "ACC-003": {
+    receivesSalary: false,
+    avgMonthlySalary: 0,
+    consistency: [false, false, false, false, false, false],
+  },
+  "ACC-004": {
+    receivesSalary: false,
+    avgMonthlySalary: 0,
+    consistency: [false, false, false, false, false, false],
+  },
 };
 
 // Income & Debit trend per account

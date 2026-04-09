@@ -2,8 +2,9 @@ import { alerts } from "@/lib/mockData";
 import { Badge } from "@/components/ui/badge";
 import ChartCard from "@/components/dashboard/ChartCard";
 import AppBarChart from "@/components/charts/AppBarChart";
+import AppAreaChart from "@/components/charts/AppAreaChart";
 import { AlertTriangle, Bell, TrendingDown, TrendingUp, Users, CreditCard, Smartphone } from "lucide-react";
-import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie, AreaChart, Area, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateDataValue } from "@/lib/i18n";
 
@@ -147,18 +148,51 @@ const AlertsPage = () => {
 
       <ChartCard title={t("alerts.trend.title")} subtitle={t("alerts.trend.subtitle")}>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={localizedAlertTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="period" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-              <Area type="monotone" dataKey="critical" stackId="1" stroke="hsl(0, 72%, 51%)" fill="hsl(0, 72%, 51%)" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="high" stackId="1" stroke="hsl(38, 92%, 50%)" fill="hsl(38, 92%, 50%)" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="medium" stackId="1" stroke="hsl(199, 89%, 48%)" fill="hsl(199, 89%, 48%)" fillOpacity={0.6} />
-              <Area type="monotone" dataKey="low" stackId="1" stroke="hsl(220, 13%, 69%)" fill="hsl(220, 13%, 69%)" fillOpacity={0.6} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <AppAreaChart
+            data={localizedAlertTrend}
+            categoryKey="period"
+            valueAxes={[
+              {
+                width: 36,
+                allowDecimals: false,
+              },
+            ]}
+            tooltipValueFormatter={(value) => String(value)}
+            areas={[
+              {
+                dataKey: "critical",
+                label: translateDataValue(t, "alertSeverity", "critical"),
+                color: "hsl(var(--destructive))",
+                stackId: "alerts",
+                fillOpacity: 0.55,
+                gradientOpacity: { from: 0.85, to: 0.16 },
+              },
+              {
+                dataKey: "high",
+                label: translateDataValue(t, "alertSeverity", "high"),
+                color: "hsl(var(--warning))",
+                stackId: "alerts",
+                fillOpacity: 0.5,
+                gradientOpacity: { from: 0.8, to: 0.14 },
+              },
+              {
+                dataKey: "medium",
+                label: translateDataValue(t, "alertSeverity", "medium"),
+                color: "hsl(var(--info))",
+                stackId: "alerts",
+                fillOpacity: 0.45,
+                gradientOpacity: { from: 0.72, to: 0.12 },
+              },
+              {
+                dataKey: "low",
+                label: translateDataValue(t, "alertSeverity", "low"),
+                color: "hsl(var(--muted-foreground))",
+                stackId: "alerts",
+                fillOpacity: 0.4,
+                gradientOpacity: { from: 0.5, to: 0.08 },
+              },
+            ]}
+          />
         </div>
       </ChartCard>
 
