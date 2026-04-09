@@ -5,6 +5,7 @@ import { vipCustomers } from "@/lib/mockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { formatCurrencyLYD } from "@/lib/formatters";
 
 const VIPPage = () => {
   const totalAUM = vipCustomers.reduce((s, v) => s + v.aum, 0);
@@ -19,11 +20,11 @@ const VIPPage = () => {
       {/* Criteria */}
       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
         <p className="text-xs font-medium text-primary mb-1">VIP Segment Criteria</p>
-        <p className="text-xs text-muted-foreground">AUM &gt; ₹10M · Monthly TRN &gt; 50 · Tenure &gt; 3 years · Active products ≥ 3</p>
+        <p className="text-xs text-muted-foreground">AUM &gt; {formatCurrencyLYD(10_000_000, { compact: true, maximumFractionDigits: 0 })} · Monthly TRN &gt; 50 · Tenure &gt; 3 years · Active products ≥ 3</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard title="Total AUM" value={`₹${(totalAUM / 1e7).toFixed(0)}Cr`} change={12.4} icon={<DollarSign className="h-4 w-4" />} />
+        <KPICard title="Total AUM" value={formatCurrencyLYD(totalAUM, { compact: true, maximumFractionDigits: 1 })} change={12.4} icon={<DollarSign className="h-4 w-4" />} />
         <KPICard title="VIP Count" value={vipCustomers.length} change={8} icon={<Crown className="h-4 w-4" />} />
         <KPICard title="MoM VIP Growth" value="+8%" icon={<TrendingUp className="h-4 w-4" />} />
         <KPICard title="Premium Adoption" value="72%" icon={<Users className="h-4 w-4" />} subtitle="3+ products" />
@@ -77,10 +78,10 @@ const VIPPage = () => {
                 <TableRow key={v.rank}>
                   <TableCell className="text-sm text-muted-foreground">{v.rank}</TableCell>
                   <TableCell className="text-sm font-medium">{v.name}</TableCell>
-                  <TableCell className="text-sm text-right">₹{(v.aum / 1e7).toFixed(1)}Cr</TableCell>
-                  <TableCell className="text-sm text-right">₹{(v.revenue / 1e5).toFixed(1)}L</TableCell>
-                  <TableCell className="text-sm text-right">{v.loanSize ? `₹${(v.loanSize / 1e7).toFixed(1)}Cr` : "—"}</TableCell>
-                  <TableCell className="text-sm text-right">₹{(v.cardSpend / 1e5).toFixed(1)}L</TableCell>
+                  <TableCell className="text-sm text-right">{formatCurrencyLYD(v.aum, { compact: true, maximumFractionDigits: 1 })}</TableCell>
+                  <TableCell className="text-sm text-right">{formatCurrencyLYD(v.revenue, { compact: true, maximumFractionDigits: 1 })}</TableCell>
+                  <TableCell className="text-sm text-right">{v.loanSize ? formatCurrencyLYD(v.loanSize, { compact: true, maximumFractionDigits: 1 }) : "—"}</TableCell>
+                  <TableCell className="text-sm text-right">{formatCurrencyLYD(v.cardSpend, { compact: true, maximumFractionDigits: 1 })}</TableCell>
                   <TableCell>
                     <Badge className={`text-[10px] ${
                       v.churnRisk === "Low" ? "bg-success text-success-foreground" :

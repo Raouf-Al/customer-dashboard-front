@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { customersListData } from "@/lib/mockData";
+import { formatCurrencyLYD } from "@/lib/formatters";
 
 type SortKey = "name" | "segment" | "accounts" | "totalBalance" | "totalRevenue" | "trnVolume" | "creditScore";
 
@@ -81,8 +82,8 @@ const CustomerListPage = () => {
                 <TableCell><Badge variant="secondary" className="text-[10px]">{c.segment}</Badge></TableCell>
                 <TableCell className="text-sm text-muted-foreground">{c.branch}</TableCell>
                 <TableCell className="text-sm text-center">{c.accounts}</TableCell>
-                <TableCell className="text-sm text-right font-medium">₹{c.totalBalance.toLocaleString()}</TableCell>
-                <TableCell className="text-sm text-right font-medium">₹{c.totalRevenue.toLocaleString()}</TableCell>
+                <TableCell className="text-sm text-right font-medium">{formatCurrencyLYD(c.totalBalance)}</TableCell>
+                <TableCell className="text-sm text-right font-medium">{formatCurrencyLYD(c.totalRevenue)}</TableCell>
                 <TableCell className="text-sm text-right">{c.trnVolume}</TableCell>
                 <TableCell className="text-sm text-center">
                   <span className={c.creditScore >= 750 ? "text-success font-medium" : c.creditScore >= 700 ? "text-foreground" : "text-warning font-medium"}>

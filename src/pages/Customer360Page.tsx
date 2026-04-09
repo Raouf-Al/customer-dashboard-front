@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { sampleCustomer, accountFinancials, accountMonthlyRevenue, accountIncome
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatCurrencyLYD } from "@/lib/formatters";
 
 const ACCOUNTS_PER_PAGE = 4;
 
@@ -17,13 +18,33 @@ const Customer360Page = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const c = sampleCustomer;
-  const [selectedAccount, setSelectedAccount] = useState(c.accounts[0].id);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [accountPage, setAccountPage] = useState(0);
-  const activeAcc = c.accounts.find((a) => a.id === selectedAccount) || c.accounts[0];
+  const activeAcc = selectedAccount ? c.accounts.find((a) => a.id === selectedAccount) : null;
 
-  const fin = accountFinancials[selectedAccount] || c.financials;
-  const monthlyRev = accountMonthlyRevenue[selectedAccount] || c.monthlyRevenue;
-  const incomeDebit = accountIncomeDebit[selectedAccount] || [];
+  const fin = selectedAccount ? accountFinancials[selectedAccount] || c.financials : c.financials;
+  const monthlyRev = selectedAccount ? accountMonthlyRevenue[selectedAccount] || c.monthlyRevenue : c.monthlyRevenue;
+  const customerIncomeDebit = useMemo(() => {
+    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthMap = new Map<string, { month: string; income: number; debit: number }>();
+
+    c.accounts.forEach((account) => {
+      (accountIncomeDebit[account.id] || []).forEach((point) => {
+        const existing = monthMap.get(point.month);
+        if (existing) {
+          existing.income += point.income;
+          existing.debit += point.debit;
+          return;
+        }
+        monthMap.set(point.month, { ...point });
+      });
+    });
+
+    return monthOrder.map((month) => monthMap.get(month) || { month, income: 0, debit: 0 });
+  }, [c.accounts]);
+  const incomeDebit = selectedAccount ? accountIncomeDebit[selectedAccount] || [] : customerIncomeDebit;
+  const openAccounts = c.accounts.filter((acc) => acc.status === "Open").length;
+  const closedAccounts = c.accounts.length - openAccounts;
 
   const totalPages = Math.ceil(c.accounts.length / ACCOUNTS_PER_PAGE);
   const paginatedAccounts = c.accounts.slice(accountPage * ACCOUNTS_PER_PAGE, (accountPage + 1) * ACCOUNTS_PER_PAGE);
@@ -36,26 +57,36 @@ const Customer360Page = () => {
 
   // Merged loans table
   const allLoans = [
-    ...c.loans.active.map((l) => ({
-      ...l,
-      loanStatus: "Active" as const,
-      behavior: "—",
-      paid: l.outstanding * 0.3,
-      installment: Math.round(l.outstanding / 60),
-      nextPayment: "2025-05-01",
-    })),
-    ...c.loans.closed.map((l) => ({
-      id: l.id,
-      type: l.type,
-      outstanding: 0,
-      rate: 0,
-      maturity: "—",
-      loanStatus: "Closed" as const,
-      behavior: l.behavior,
-      paid: l.amount,
-      installment: 0,
-      nextPayment: "—",
-    })),
+    ...c.loans.active.map((l, index) => {
+      const linkedAccount = c.accounts[index % c.accounts.length];
+      return {
+        ...l,
+        accountNo: linkedAccount.number,
+        accountClass: linkedAccount.class,
+        loanStatus: "Active" as const,
+        behavior: "—",
+        paid: l.outstanding * 0.3,
+        installment: Math.round(l.outstanding / 60),
+        nextPayment: "2025-05-01",
+      };
+    }),
+    ...c.loans.closed.map((l, index) => {
+      const linkedAccount = c.accounts[(index + c.loans.active.length) % c.accounts.length];
+      return {
+        id: l.id,
+        type: l.type,
+        accountNo: linkedAccount.number,
+        accountClass: linkedAccount.class,
+        outstanding: 0,
+        rate: 0,
+        maturity: "—",
+        loanStatus: "Closed" as const,
+        behavior: l.behavior,
+        paid: l.amount,
+        installment: 0,
+        nextPayment: "—",
+      };
+    }),
   ];
 
   return (
@@ -77,17 +108,22 @@ const Customer360Page = () => {
             <User className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-success text-success-foreground text-[10px]">{c.status}</Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="bg-success text-success-foreground text-[10px]">
+                Open: {openAccounts}
+              </Badge>
+              <Badge variant="secondary" className="text-[10px]">
+                Closed: {closedAccounts}
+              </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{c.id}</p>
-            <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4 lg:grid-cols-6">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {([
                 [t("label.segment"), c.segment], [t("label.branch"), c.primaryBranch], [t("label.type"), c.customerType],
                 [t("label.accounts"), c.accountCount], [t("label.age"), c.age], [t("label.tenure"), c.tenure],
                 [t("label.kyc"), c.kyc], [t("label.gender"), c.gender], [t("label.nationality"), c.nationality],
               ] as [string, string | number][]).map(([label, val]) => (
-                <div key={label}>
+                <div key={label} className="rounded-md border border-border bg-muted/20 p-2">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
                   <p className="text-xs font-medium text-card-foreground">{val}</p>
                 </div>
@@ -126,7 +162,7 @@ const Customer360Page = () => {
                     {acc.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm text-right font-medium">₹{acc.balance.toLocaleString()}</TableCell>
+                <TableCell className="text-sm text-right font-medium">{formatCurrencyLYD(acc.balance)}</TableCell>
                 <TableCell className="text-sm text-right">{acc.creditScore}</TableCell>
                 <TableCell className="text-sm text-right">
                   <span className={acc.riskScore > 60 ? "text-destructive font-medium" : "text-success font-medium"}>{acc.riskScore}</span>
@@ -153,16 +189,27 @@ const Customer360Page = () => {
       </ChartCard>
 
       {/* Selected account indicator */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-        {t("c360.showingData")} <span className="font-mono font-medium text-foreground">{activeAcc.number}</span> ({activeAcc.class})
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <div className={`h-2 w-2 rounded-full ${activeAcc ? "bg-primary animate-pulse" : "bg-chart-2"}`} />
+        {activeAcc ? (
+          <>
+            {t("c360.showingData")} <span className="font-mono font-medium text-foreground">{activeAcc.number}</span> ({activeAcc.class})
+          </>
+        ) : (
+          <span>Showing customer-level aggregated data</span>
+        )}
+        {activeAcc && (
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px]" onClick={() => setSelectedAccount(null)}>
+            View customer level
+          </Button>
+        )}
       </div>
 
       {/* 3. Financial KPIs — replaced Avg Daily TRN & Min Sub Revenue with ADB & Recency */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard title={t("c360.totalRevenue")} value={`₹${fin.totalRevenue.toLocaleString()}`} subtitle={t("c360.commission")} />
+        <KPICard title={t("c360.totalRevenue")} value={formatCurrencyLYD(fin.totalRevenue)} subtitle={t("c360.commission")} />
         <KPICard title={t("c360.trnVolume")} value={fin.trnVolume} subtitle={t("c360.totalTrn")} />
-        <KPICard title={t("c360.adb")} value={`₹${(fin.adb || 0).toLocaleString()}`} subtitle={t("c360.avgDailyBalance")} />
+        <KPICard title={t("c360.adb")} value={formatCurrencyLYD(fin.adb || 0)} subtitle={t("c360.avgDailyBalance")} />
         <KPICard title={t("c360.recencyDays")} value={`${fin.recencyDays || 0}`} subtitle={t("c360.daysSinceLastTrn")} />
       </div>
 
@@ -176,7 +223,7 @@ const Customer360Page = () => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">{t("c360.avgMonthlySalary")}</p>
-              <p className="text-lg font-semibold text-card-foreground">₹{c.salary.avgMonthlySalary.toLocaleString()}</p>
+              <p className="text-lg font-semibold text-card-foreground">{formatCurrencyLYD(c.salary.avgMonthlySalary)}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">{t("c360.consistency")}</p>
@@ -242,7 +289,7 @@ const Customer360Page = () => {
               <div key={p.name} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate">{p.name}</span>
                 <Progress value={(p.revenue / productsByRev[0].revenue) * 100} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-16 text-right">₹{(p.revenue / 1000).toFixed(1)}K</span>
+                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(p.revenue, { compact: true, maximumFractionDigits: 1 })}</span>
               </div>
             ))}
           </div>
@@ -267,7 +314,7 @@ const Customer360Page = () => {
               <div key={t2.code} className="flex items-center gap-3">
                 <span className="w-28 text-xs text-foreground truncate font-mono">{t2.code}</span>
                 <Progress value={(t2.revenue / trnByRev[0].revenue) * 100} className="h-1.5 flex-1" />
-                <span className="text-xs text-muted-foreground w-16 text-right">₹{(t2.revenue / 1000).toFixed(1)}K</span>
+                <span className="text-xs text-muted-foreground w-16 text-right">{formatCurrencyLYD(t2.revenue, { compact: true, maximumFractionDigits: 1 })}</span>
               </div>
             ))}
           </div>
@@ -313,7 +360,7 @@ const Customer360Page = () => {
           <div className="rounded-md border border-border p-3">
             <p className="text-xs font-medium text-muted-foreground">{t("c360.smsAlerts")}</p>
             <Badge variant="secondary" className="mt-1 text-[10px]">{c.subscriptions.smsAlerts.tier}</Badge>
-            <p className="mt-2 text-xs text-muted-foreground">₹{c.subscriptions.smsAlerts.price}/mo</p>
+            <p className="mt-2 text-xs text-muted-foreground">{formatCurrencyLYD(c.subscriptions.smsAlerts.price)}/mo</p>
           </div>
           {/* Cards */}
           {c.cards.map((card) => (
@@ -324,7 +371,7 @@ const Customer360Page = () => {
               </div>
               {card.limit > 0 && (
                 <>
-                  <p className="text-[10px] text-muted-foreground">{t("label.limit")}: ₹{(card.limit / 1000).toFixed(0)}K</p>
+                  <p className="text-[10px] text-muted-foreground">{t("label.limit")}: {formatCurrencyLYD(card.limit, { compact: true, maximumFractionDigits: 0 })}</p>
                   <div className="mt-1">
                     <div className="flex justify-between text-[10px] mb-0.5"><span className="text-muted-foreground">{t("label.utilization")}</span><span>{card.utilization}%</span></div>
                     <Progress value={card.utilization} className="h-1.5" />
@@ -361,6 +408,7 @@ const Customer360Page = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="text-xs">{t("c360.loanId")}</TableHead>
+              <TableHead className="text-xs">{t("c360.accountNo")}</TableHead>
               <TableHead className="text-xs">{t("c360.type")}</TableHead>
               <TableHead className="text-xs">{t("c360.loanStatus")}</TableHead>
               <TableHead className="text-xs">{t("c360.behavior")}</TableHead>
@@ -374,6 +422,10 @@ const Customer360Page = () => {
             {allLoans.map((l) => (
               <TableRow key={l.id}>
                 <TableCell className="text-sm font-mono">{l.id}</TableCell>
+                <TableCell>
+                  <div className="text-sm font-mono">{l.accountNo}</div>
+                  <div className="text-[10px] text-muted-foreground">{l.accountClass}</div>
+                </TableCell>
                 <TableCell className="text-sm">{l.type}</TableCell>
                 <TableCell>
                   <Badge className={`text-[10px] ${l.loanStatus === "Active" ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground"}`}>
@@ -387,20 +439,14 @@ const Customer360Page = () => {
                     </span>
                   ) : "—"}
                 </TableCell>
-                <TableCell className="text-sm text-right">{l.outstanding > 0 ? `₹${(l.outstanding / 1e5).toFixed(1)}L` : "—"}</TableCell>
-                <TableCell className="text-sm text-right">₹{(l.paid / 1e5).toFixed(1)}L</TableCell>
-                <TableCell className="text-sm text-right">{l.installment > 0 ? `₹${l.installment.toLocaleString()}` : "—"}</TableCell>
+                <TableCell className="text-sm text-right">{l.outstanding > 0 ? formatCurrencyLYD(l.outstanding, { compact: true, maximumFractionDigits: 1 }) : "—"}</TableCell>
+                <TableCell className="text-sm text-right">{formatCurrencyLYD(l.paid, { compact: true, maximumFractionDigits: 1 })}</TableCell>
+                <TableCell className="text-sm text-right">{l.installment > 0 ? formatCurrencyLYD(l.installment) : "—"}</TableCell>
                 <TableCell className="text-sm">{l.nextPayment}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        {/* Creditworthiness summary */}
-        <div className="mt-4 border-t border-border pt-3 grid grid-cols-3 gap-3">
-          <div><p className="text-[10px] text-muted-foreground">{t("c360.creditScore")}</p><p className="text-lg font-semibold text-card-foreground">{c.loans.creditScore}</p></div>
-          <div><p className="text-[10px] text-muted-foreground">{t("c360.credibility")}</p><p className="text-sm font-medium text-success">{c.loans.credibility}</p></div>
-          <div><p className="text-[10px] text-muted-foreground">{t("c360.dtiRatio")}</p><p className="text-sm font-medium text-card-foreground">{c.loans.dti}%</p></div>
-        </div>
       </ChartCard>
     </div>
   );
